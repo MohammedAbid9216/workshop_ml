@@ -1,5 +1,5 @@
 [project]
-name = "worshop-ml"
+name = "workshop-ml"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -9,10 +9,3 @@ dependencies = [
     "pandas>=3.0.5",
     "scikit-learn>=1.9.0",
 ]
-
-[project.scripts]
-worshop-ml = "worshop_ml:main"
-
-[build-system]
-requires = ["uv_build>=0.12.3,<0.13.0"]
-build-backend = "uv_build"
