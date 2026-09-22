@@ -1,0 +1,15 @@
+[2026-09-22 13:54:44,579] 41 main -INFO -Prediction request received :: age35, genderFemale, fever90.0, coughStrong,cityMumbai
+[2026-09-22 13:54:44,580] 37 src.pipeline.predict_pipeline -INFO -Loading Model and Preprocessor
+[2026-09-22 13:54:44,672] 63 src.pipeline.predict_pipeline -INFO -Prediction completed: Positive, confidence_score = [[0.4 0.6]]
+[2026-09-22 13:55:19,046] 41 main -INFO -Prediction request received :: age105, genderMale, fever104.0, coughMild,cityDelhi
+[2026-09-22 13:55:19,048] 37 src.pipeline.predict_pipeline -INFO -Loading Model and Preprocessor
+[2026-09-22 13:55:19,060] 63 src.pipeline.predict_pipeline -INFO -Prediction completed: Positive, confidence_score = [[0.4 0.6]]
+[2026-09-22 13:55:30,960] 41 main -INFO -Prediction request received :: age25, genderMale, fever104.0, coughMild,cityDelhi
+[2026-09-22 13:55:30,961] 37 src.pipeline.predict_pipeline -INFO -Loading Model and Preprocessor
+[2026-09-22 13:55:30,966] 63 src.pipeline.predict_pipeline -INFO -Prediction completed: Positive, confidence_score = [[0.2 0.8]]
+[2026-09-22 13:55:32,384] 41 main -INFO -Prediction request received :: age25, genderMale, fever104.0, coughMild,cityDelhi
+[2026-09-22 13:55:32,384] 37 src.pipeline.predict_pipeline -INFO -Loading Model and Preprocessor
+[2026-09-22 13:55:32,390] 63 src.pipeline.predict_pipeline -INFO -Prediction completed: Positive, confidence_score = [[0.2 0.8]]
+[2026-09-22 13:56:09,697] 41 main -INFO -Prediction request received :: age70, genderFemale, fever98.0, coughMild,cityBangalore
+[2026-09-22 13:56:09,697] 37 src.pipeline.predict_pipeline -INFO -Loading Model and Preprocessor
+[2026-09-22 13:56:09,701] 63 src.pipeline.predict_pipeline -INFO -Prediction completed: Negative, confidence_score = [[0.6 0.4]]

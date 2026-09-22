@@ -29,6 +29,7 @@ def get_logger(name:str = __name__):
         logger.addHandler(console_handler) 
     return logger 
 
+
 if __name__ == "__main__":
     log = get_logger(__name__) 
     log.info("Logger test message - Logs started") 
