@@ -1,0 +1,50 @@
+[2026-09-22 23:43:58,430] 20 src.exception -ERROR -Error occured in python script: [/Users/mohdabid/Pictures/projects/worshop_ml/nlp_pretrained/ner_tagger.py]at line number: [19]with error message: [
+**********************************************************************
+  Resource 'maxent_ne_chunker_tab' not found.
+  Please use the NLTK Downloader to obtain the resource:
+
+  >>> import nltk
+  >>> nltk.download('maxent_ne_chunker_tab')
+
+  For more information see: https://www.nltk.org/data.html
+
+  Attempted to load 'chunkers/maxent_ne_chunker_tab/english_ace_multiclass/'
+
+  Searched in:
+    - '/Users/mohdabid/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/share/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/lib/nltk_data'
+    - '/usr/share/nltk_data'
+    - '/usr/local/share/nltk_data'
+    - '/usr/lib/nltk_data'
+    - '/usr/local/lib/nltk_data'
+    - '/Users/mohdabid/nltk_data/taggers/averaged_perceptron_tagger_eng'
+**********************************************************************
+]
+[2026-09-22 23:43:58,430] 153 main -INFO -Error occured in pretrained nlp analysis
+[2026-09-22 23:45:10,876] 20 src.exception -ERROR -Error occured in python script: [/Users/mohdabid/Pictures/projects/worshop_ml/nlp_pretrained/ner_tagger.py]at line number: [19]with error message: [
+**********************************************************************
+  Resource 'maxent_ne_chunker_tab' not found.
+  Please use the NLTK Downloader to obtain the resource:
+
+  >>> import nltk
+  >>> nltk.download('maxent_ne_chunker_tab')
+
+  For more information see: https://www.nltk.org/data.html
+
+  Attempted to load 'chunkers/maxent_ne_chunker_tab/english_ace_multiclass/'
+
+  Searched in:
+    - '/Users/mohdabid/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/share/nltk_data'
+    - '/Users/mohdabid/Pictures/projects/worshop_ml/.venv/lib/nltk_data'
+    - '/usr/share/nltk_data'
+    - '/usr/local/share/nltk_data'
+    - '/usr/lib/nltk_data'
+    - '/usr/local/lib/nltk_data'
+    - '/Users/mohdabid/nltk_data/taggers/averaged_perceptron_tagger_eng'
+**********************************************************************
+]
+[2026-09-22 23:45:10,877] 153 main -INFO -Error occured in pretrained nlp analysis
