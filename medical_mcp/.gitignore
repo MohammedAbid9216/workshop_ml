@@ -1,0 +1,14 @@
+medical_mcp/.env
+
+# Environment files
+.env
+*.env
+
+# Databases
+*.db
+
+# Logs
+logs/
+
+# Generated artifacts
+artifacts/
