@@ -53,3 +53,19 @@ templates ---> pretraine_nlp.html
 
 Add tools in main.py 
 
+
+
+
+
+
+
+
+admin
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzkxMzk3NDIyfQ.ooISjJaUzPwZZrFLNxEX6SSDPVFHj-tvh1hiLCV2jrU
+
+
+
+patient
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZXhwIjoxNzkxMzk3ODY4fQ.Npqj1vuBtsrUEfwG42R0NF1hanLDgrBiPfjBqjI1NJ0

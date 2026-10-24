@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CareMind | RAG Clinic Assistant</title>
+  <style>
+    :root {
+      --bg: #f4f7fb; --surface: rgba(255,255,255,.88); --ink: #17233b;
+      --muted: #718096; --line: #e4eaf2; --teal: #087f8c; --teal2: #0aa6a6;
+      --navy: #132b4a; --soft: #e9f7f6; --shadow: 0 20px 55px rgba(25,49,78,.10);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background:
+      radial-gradient(circle at 10% 0%, #dff5f2 0, transparent 30%),
+      radial-gradient(circle at 95% 15%, #e4edff 0, transparent 28%), var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, textarea { font: inherit; }
+    .app { max-width: 1440px; margin: auto; min-height: 100vh; display: grid; grid-template-columns: 270px minmax(0,1fr); padding: 20px; gap: 20px; }
+    .sidebar { background: var(--navy); color: white; border-radius: 25px; padding: 25px 18px; display: flex; flex-direction: column; min-height: calc(100vh - 40px); box-shadow: var(--shadow); }
+    .brand { display:flex; align-items:center; gap:12px; padding: 3px 7px 28px; }
+    .brand-mark { width:42px; height:42px; display:grid; place-items:center; border-radius:15px; background:linear-gradient(135deg,#35d0bd,#8de8d7); color:#10384a; font-size:22px; font-weight:900; box-shadow:0 8px 25px #0ba7a455; }
+    .brand strong { display:block; letter-spacing:-.4px; font-size:17px; }
+    .brand small { color:#a8bed4; font-size:11px; letter-spacing:1.6px; text-transform:uppercase; }
+    .nav-label { color:#7897b5; font-size:10px; letter-spacing:1.8px; font-weight:800; padding: 12px 12px 10px; }
+    .nav-item { display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:13px; color:#c4d5e7; font-size:13px; margin-bottom:5px; }
+    .nav-item.active { color:#fff; background:#ffffff15; box-shadow:inset 3px 0 #48d4c3; }
+    .nav-icon { width:19px; text-align:center; font-size:16px; }
+    .sidebar-bottom { margin-top:auto; padding:17px 12px 3px; color:#9bb1c8; font-size:11px; line-height:1.6; }
+    .secure { border:1px solid #ffffff22; border-radius:15px; padding:13px; margin-bottom:15px; color:#d7e6f4; }
+    .secure b { display:block; color:#8be1d4; font-size:12px; margin-bottom:4px; }
+    .main { min-width:0; display:flex; flex-direction:column; gap:18px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:7px 5px; }
+    .eyebrow { color:var(--teal); font-size:10px; font-weight:850; letter-spacing:2px; text-transform:uppercase; }
+    h1 { font-size:clamp(23px,3vw,32px); letter-spacing:-1.2px; margin:5px 0 0; }
+    .top-actions { display:flex; align-items:center; gap:10px; }
+    .status { display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); padding:10px 13px; border-radius:99px; color:#516176; font-size:12px; white-space:nowrap; }
+    .dot { width:7px; height:7px; border-radius:50%; background:#f0ae43; box-shadow:0 0 0 4px #f0ae431b; }
+    .dot.online { background:#21b883; box-shadow:0 0 0 4px #21b8831b; }
+    .icon-btn { border:1px solid var(--line); width:40px; height:40px; border-radius:13px; background:white; color:#52677d; }
+    .welcome { position:relative; overflow:hidden; background:linear-gradient(115deg,#12314f,#0b727d); border-radius:24px; color:white; padding:26px 28px; box-shadow:var(--shadow); }
+    .welcome:after { content:"✚"; position:absolute; right:42px; top:-36px; font-size:190px; color:#ffffff0b; transform:rotate(12deg); }
+    .welcome-tag { display:inline-flex; align-items:center; gap:7px; color:#a9eee5; background:#ffffff13; border:1px solid #ffffff1b; border-radius:99px; padding:7px 10px; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; }
+    .welcome h2 { font-size:clamp(20px,2.6vw,27px); margin:16px 0 8px; letter-spacing:-.7px; }
+    .welcome p { max-width:650px; color:#c4dce9; font-size:13px; line-height:1.7; margin:0; }
+    .metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+    .metric { background:var(--surface); border:1px solid #e5ebf2; border-radius:18px; padding:17px 18px; display:flex; align-items:center; gap:13px; }
+    .metric-icon { width:40px; height:40px; flex-shrink:0; display:grid; place-items:center; background:var(--soft); color:var(--teal); border-radius:13px; font-size:18px; }
+    .metric strong { display:block; font-size:13px; }
+    .metric span { display:block; color:var(--muted); font-size:11px; margin-top:4px; }
+    .workspace { display:grid; grid-template-columns:minmax(0,1fr) 255px; gap:17px; align-items:stretch; min-height:430px; }
+    .chat-card,.side-card { background:var(--surface); border:1px solid #e4eaf2; border-radius:22px; box-shadow:0 8px 30px #17365708; min-width:0; }
+    .chat-card { display:flex; flex-direction:column; overflow:hidden; }
+    .chat-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:17px 20px; border-bottom:1px solid var(--line); }
+    .assistant-id { display:flex; align-items:center; gap:11px; }
+    .avatar { width:39px; height:39px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg,#c9f5ec,#e4f7ff); font-size:20px; }
+    .assistant-id strong { font-size:13px; display:block; }
+    .assistant-id small { color:var(--muted); font-size:11px; display:block; margin-top:4px; }
+    .pill { border-radius:99px; background:#e7f8f0; color:#15815c; padding:6px 9px; font-size:10px; font-weight:800; white-space:nowrap; }
+    .messages { padding:22px 20px; display:flex; flex-direction:column; gap:18px; flex:1; min-height:220px; max-height:410px; overflow:auto; }
+    .message { display:flex; align-items:flex-start; gap:10px; max-width:94%; }
+    .message.user { align-self:flex-end; flex-direction:row-reverse; }
+    .bubble { background:#f0f5fa; border:1px solid #e8eef5; border-radius:4px 16px 16px 16px; padding:13px 15px; font-size:13px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .message.user .bubble { background:#e4f7f4; border-color:#d5efeb; border-radius:16px 4px 16px 16px; }
+    .mini-avatar { width:28px; height:28px; flex-shrink:0; border-radius:10px; display:grid; place-items:center; background:#d8f4ee; color:#087f8c; font-size:12px; font-weight:900; }
+    .message.user .mini-avatar { background:#dce7f7; color:#294d7a; }
+    .sources { margin-top:12px; padding-top:10px; border-top:1px solid #dbe7ed; color:#52707e; font-size:11px; }
+    .source-chip { display:inline-block; background:#fff; border:1px solid #dce8ed; border-radius:7px; padding:4px 7px; margin:6px 5px 0 0; color:#39707a; }
+    .typing { color:#718096; font-size:12px; padding-left:39px; display:none; }
+    .suggestions { display:flex; gap:8px; flex-wrap:wrap; padding:0 20px 15px; }
+    .suggestion { border:1px solid #dce7ef; color:#46647a; background:#fff; padding:8px 11px; border-radius:99px; cursor:pointer; font-size:11px; transition:.2s; }
+    .suggestion:hover { border-color:#78cfc5; background:#f0fbf9; }
+    .composer { padding:15px 17px 17px; border-top:1px solid var(--line); background:#fbfdff; }
+    .composer-wrap { display:flex; gap:10px; align-items:flex-end; border:1px solid #dce6ef; background:#fff; border-radius:17px; padding:9px; box-shadow:0 5px 16px #24456308; }
+    textarea { border:0; outline:0; resize:vertical; min-height:42px; max-height:130px; flex:1; color:var(--ink); background:transparent; padding:10px 8px; font-size:13px; }
+    textarea::placeholder { color:#9aa8b7; }
+    .send { border:0; border-radius:12px; padding:12px 16px; color:#fff; background:linear-gradient(135deg,#078b91,#0bb3a4); font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 15px #0a99952e; }
+    .send:disabled { opacity:.55; cursor:wait; }
+
+    .listen-answer-btn { margin-top:10px; border:1px solid #cfe5e7; border-radius:10px; padding:7px 11px; background:#f0fbfa; color:#087f83; font-size:12px; font-weight:700; cursor:pointer; }
+    .listen-answer-btn:disabled { opacity:.6; cursor:wait; }
+    #micBtn.listening { background:#b42318; }
+    .voice-status { font-size:12px; color:#087f83; margin:6px 4px 0; min-height:16px; }
+
+    .fineprint { color:#8a98a8; font-size:10px; margin:10px 4px 0; line-height:1.5; }
+    .side-card { padding:19px; }
+    .side-card h3 { font-size:13px; margin:0 0 5px; }
+    .side-card .sub { color:var(--muted); font-size:11px; line-height:1.6; margin:0 0 16px; }
+    .tip { display:flex; align-items:flex-start; gap:10px; padding:12px 0; border-bottom:1px solid #edf1f5; }
+    .tip:last-of-type { border-bottom:0; }
+    .tip-icon { width:31px; height:31px; display:grid; place-items:center; flex-shrink:0; background:#edf8f7; border-radius:10px; color:var(--teal); }
+    .tip b { display:block; font-size:11px; margin:1px 0 4px; }
+    .tip span { display:block; color:var(--muted); font-size:10px; line-height:1.5; }
+    .disclaimer { margin-top:16px; border-radius:14px; padding:13px; background:#fff8e9; color:#80612a; font-size:10px; line-height:1.65; border:1px solid #f7e8c8; }
+    .footer { color:#91a0af; font-size:10px; display:flex; justify-content:space-between; gap:10px; padding:0 5px 6px; }
+    .error { color:#a33b3b; background:#fff1f1; border:1px solid #f3d2d2; border-radius:10px; padding:10px 12px; font-size:12px; }
+    @media (max-width:1050px) { .workspace { grid-template-columns:1fr; } .side-card { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; } .side-card h3,.side-card .sub,.disclaimer { grid-column:1/-1; } }
+    @media (max-width:760px) { .app { display:block; padding:10px; } .sidebar { display:none; } .topbar { padding:8px 2px 14px; } .status { font-size:10px; padding:8px 10px; } .icon-btn { display:none; } .welcome { padding:22px; } .welcome:after { right:4px; font-size:120px; } .metrics { grid-template-columns:1fr; gap:8px; } .metric { padding:12px 14px; } .workspace { margin-top:0; } .chat-head { padding:14px; } .messages { padding:17px 13px; } .suggestions { padding:0 13px 13px; } .composer { padding:12px; } .side-card { display:block; } .footer { margin-top:14px; } }
+  
+    .voice-agent-overlay {
+      position:fixed; inset:0; z-index:9999; display:none;
+      align-items:center; justify-content:center; padding:20px;
+      background:rgba(7,18,30,.78); backdrop-filter:blur(12px);
+    }
+    .voice-agent-overlay.open { display:flex; }
+    .voice-agent-panel {
+      width:min(440px,100%); min-height:490px; border-radius:28px;
+      background:linear-gradient(155deg,#122c3a,#091720);
+      color:#fff; display:flex; flex-direction:column; align-items:center;
+      padding:24px; box-shadow:0 24px 90px #0008; position:relative;
+    }
+    .voice-agent-top {
+      width:100%; display:flex; align-items:center;
+      justify-content:space-between; gap:12px;
+    }
+    .voice-agent-top button,.voice-agent-controls button {
+      border:0; cursor:pointer; color:#fff; background:#ffffff1c;
+      border-radius:50%; width:46px; height:46px; font-size:19px;
+    }
+    .voice-orb {
+      width:150px; height:150px; margin:48px auto 24px;
+      border-radius:50%; display:grid; place-items:center;
+      background:radial-gradient(circle at 35% 30%,#d2fff5,#39c5bd 38%,#176c82 72%,#15354c);
+      box-shadow:0 0 0 14px #43d4c522,0 0 70px #2bb9b777;
+      font-size:48px; transition:transform .2s,box-shadow .2s;
+    }
+    .voice-orb.listening { animation:careMindPulse 1.5s ease-in-out infinite; }
+    @keyframes careMindPulse {
+      0%,100% { transform:scale(1); box-shadow:0 0 0 10px #43d4c522,0 0 45px #2bb9b755; }
+      50% { transform:scale(1.07); box-shadow:0 0 0 22px #43d4c522,0 0 75px #2bb9b799; }
+    }
+    .voice-agent-status { color:#b7d8df; font-size:14px; text-align:center; min-height:22px; }
+    .voice-agent-transcript {
+      margin-top:14px; width:100%; max-height:100px; overflow:auto;
+      text-align:center; color:#e1f3f5; font-size:14px; line-height:1.5;
+    }
+    .voice-agent-controls { display:flex; gap:18px; align-items:center; margin-top:auto; padding-top:28px; }
+    .voice-agent-controls .voice-end { background:#c63838; }
+    .voice-agent-controls .voice-start { background:#168b83; width:58px; height:58px; }
+    .voice-agent-note { color:#93aeb8; font-size:11px; text-align:center; margin-top:15px; }
+    @media(max-width:480px) {
+      .voice-agent-overlay { padding:0; }
+      .voice-agent-panel { min-height:100dvh; border-radius:0; }
+    }
+
+</style>
+<style id="caremind-home-auth-polish">
+/* CAREMIND_HOME_AUTH_POLISH_V1 */
+:root{--cm-teal:#087f8c;--cm-teal2:#0aa6a6;--cm-navy:#12304b;--cm-ink:#172b42;--cm-muted:#64748b;--cm-line:#e2eaf0;--cm-soft:#eef9f8}
+body{background:radial-gradient(circle at 8% 0%,#e2f7f3 0,transparent 30%),radial-gradient(circle at 95% 12%,#e7efff 0,transparent 27%),#f6f9fc!important;color:var(--cm-ink)}
+button,a{transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+button:hover{transform:translateY(-1px)}
+#careAuthActions a,#careAuthActions button{border-radius:12px!important;padding:10px 15px!important;font-weight:750!important;text-decoration:none!important;border:1px solid #d8e7ec!important}
+#careAuthActions a[href*="register"],#careAuthActions a[data-auth="signup"]{background:linear-gradient(135deg,var(--cm-teal),var(--cm-teal2))!important;color:white!important;border-color:transparent!important;box-shadow:0 8px 20px #087f8c26}
+#careAuthActions a[href*="login"]{background:white!important;color:var(--cm-teal)!important}
+#careAuthActions button{background:#fff!important;color:var(--cm-teal)!important}
+/* Medical landing hero inserted below the existing header; keeps all existing app logic. */
+.caremind-medical-home{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(250px,.85fr);gap:24px;align-items:stretch;margin:18px 0 24px;padding:clamp(22px,4vw,42px);border-radius:26px;background:linear-gradient(120deg,#10304c 0%,#087f8c 72%,#0aa6a6 100%);color:#fff;position:relative;overflow:hidden;box-shadow:0 22px 50px #0a647022}
+.caremind-medical-home:after{content:'✚';position:absolute;right:20%;bottom:-105px;font-size:280px;color:#ffffff0b;pointer-events:none}.cm-home-copy,.cm-home-panel{position:relative;z-index:1}.cm-home-kicker{display:inline-flex;align-items:center;gap:8px;border:1px solid #ffffff35;border-radius:99px;padding:7px 11px;color:#dcfffb;font-size:11px;font-weight:800;letter-spacing:.8px}.cm-home-copy h1{font-size:clamp(30px,4.2vw,54px);line-height:1.05;letter-spacing:-1.8px;margin:20px 0 14px;max-width:650px}.cm-home-copy p{color:#d7eeee;line-height:1.75;font-size:14px;max-width:520px;margin:0}.cm-home-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}.cm-home-actions button{border:1px solid #ffffff55;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}.cm-home-primary{background:#fff;color:#087f8c}.cm-home-secondary{background:#ffffff14;color:#fff}.cm-home-trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:25px;color:#d8f5f1;font-size:11px}.cm-home-trust span:before{content:'✓';margin-right:6px;color:#8df1df;font-weight:900}.cm-home-panel{align-self:center;background:#ffffff14;border:1px solid #ffffff32;border-radius:22px;padding:20px;backdrop-filter:blur(8px)}.cm-home-panel-title{font-size:12px;color:#d4f7f3;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}.cm-home-service{display:flex;gap:12px;align-items:center;background:#ffffff12;border:1px solid #ffffff1b;padding:13px;border-radius:15px;margin-top:9px}.cm-home-service-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;background:#ffffff1c;border-radius:13px;font-size:20px}.cm-home-service strong{display:block;font-size:13px}.cm-home-service small{display:block;color:#d0e8e9;font-size:11px;margin-top:4px;line-height:1.4}.cm-home-services{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 22px}.cm-home-service-light{background:#fff;border:1px solid #e3edf1;border-radius:18px;padding:17px;box-shadow:0 8px 22px #153c5410;color:#20384d}.cm-home-service-light .cm-home-service-icon{background:#e8f8f6;color:#087f8c}.cm-home-service-light strong{display:block;font-size:13px}.cm-home-service-light small{display:block;color:#718096;font-size:11px;line-height:1.5;margin-top:6px}
+/* Improve existing homepage cards without replacing its layout or app logic. */
+.card,.service-card,.feature-card,.doctor-card,.welcome-card,.hero-card,.chat-panel,.chat-container,.assistant-card{border-radius:20px!important;box-shadow:0 14px 38px #183b5610!important}
+input,textarea,select{border-radius:12px!important}
+#careAuthGate[hidden]{display:none!important}
+#careAuthGate{position:fixed;inset:0;z-index:999999;display:grid;place-items:center;padding:18px;background:rgba(10,28,47,.62);backdrop-filter:blur(9px);overflow-y:auto}
+.cm-auth-card{width:min(920px,100%);min-height:520px;background:#fff;border-radius:26px;overflow:hidden;display:grid;grid-template-columns: .95fr 1.05fr;box-shadow:0 30px 100px #06192c55;position:relative;animation:cm-pop .2s ease-out}
+@keyframes cm-pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.cm-auth-art{padding:34px;background:linear-gradient(145deg,#10304c,#087f8c 72%,#16b9aa);color:#fff;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.cm-auth-art:after{content:'✚';position:absolute;right:-24px;bottom:-90px;font-size:300px;font-weight:900;color:#ffffff0d;line-height:1}
+.cm-auth-brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:18px;position:relative;z-index:1}.cm-auth-brand span{display:grid;place-items:center;width:40px;height:40px;border-radius:14px;background:#ffffff20;font-size:23px}
+.cm-auth-art h2{font-size:clamp(28px,4vw,42px);line-height:1.12;letter-spacing:-1.4px;margin:0 0 14px;position:relative;z-index:1}.cm-auth-art p{color:#e1f4f4;line-height:1.7;margin:0;max-width:330px;position:relative;z-index:1}.cm-auth-points{display:grid;gap:12px;margin-top:28px;position:relative;z-index:1}.cm-auth-point{display:flex;align-items:center;gap:10px;font-size:13px;color:#efffff}.cm-auth-point b{display:grid;place-items:center;width:26px;height:26px;border-radius:9px;background:#ffffff1f}
+.cm-auth-form{padding:40px clamp(22px,4vw,48px);display:flex;flex-direction:column;justify-content:center;min-width:0}.cm-auth-close{position:absolute;right:15px;top:13px;width:36px;height:36px;border:0;border-radius:50%;background:#f0f5f7;color:#526477;font-size:22px;cursor:pointer;z-index:2}.cm-auth-eyebrow{color:var(--cm-teal);font-weight:800;text-transform:uppercase;letter-spacing:1.7px;font-size:10px}.cm-auth-form h3{font-size:29px;letter-spacing:-.7px;margin:9px 0 7px;color:#172b42}.cm-auth-sub{color:#718096;font-size:13px;line-height:1.6;margin:0 0 23px}.cm-auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#f1f6f8;padding:5px;border-radius:13px;margin-bottom:20px}.cm-auth-tabs button{border:0;border-radius:10px;padding:10px;background:transparent;color:#637488;font-weight:750;cursor:pointer}.cm-auth-tabs button.active{background:#fff;color:var(--cm-teal);box-shadow:0 2px 8px #12304b12}.cm-auth-fields{display:grid;gap:13px}.cm-auth-fields label{font-size:12px;font-weight:750;color:#34485c;display:grid;gap:7px}.cm-auth-fields input{width:100%;padding:12px 13px;border:1px solid #dce6ec;border-radius:11px!important;outline:none;font:inherit;font-size:14px;background:#fbfdfe}.cm-auth-fields input:focus{border-color:#0aa6a6;box-shadow:0 0 0 3px #0aa6a618}.cm-auth-submit{margin-top:18px;width:100%;border:0;border-radius:12px;padding:13px 15px;background:linear-gradient(135deg,#087f8c,#0aa6a6);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 9px 22px #087f8c27}.cm-auth-message{font-size:12px;line-height:1.5;margin-top:12px;min-height:18px;color:#b42318}.cm-auth-message.success{color:#087f5b}.cm-auth-foot{font-size:11px;color:#8a99a8;line-height:1.5;margin-top:12px}
+#caremindChatWarning{position:fixed;z-index:999990;left:50%;bottom:24px;transform:translateX(-50%);width:min(540px,calc(100% - 28px));background:#fff;border:1px solid #dce9ed;border-radius:18px;box-shadow:0 18px 60px #0b29402b;padding:16px;display:flex;align-items:center;gap:13px}
+#caremindChatWarning[hidden]{display:none!important}.cm-warning-icon{flex:0 0 42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#fff4dc;color:#9a6700;font-size:21px}.cm-warning-copy{flex:1;min-width:0}.cm-warning-copy strong{display:block;font-size:14px;color:#20364a}.cm-warning-copy span{display:block;font-size:12px;line-height:1.5;color:#64748b;margin-top:3px}.cm-warning-actions{display:flex;gap:7px;flex-wrap:wrap}.cm-warning-actions button{border-radius:10px;padding:9px 11px;border:1px solid #dce7eb;background:#fff;color:#087f8c;font-weight:750;cursor:pointer}.cm-warning-actions button.primary{background:#087f8c;color:#fff;border-color:#087f8c}
+@media(max-width:680px){.cm-auth-card{grid-template-columns:1fr;min-height:0;max-width:440px}.cm-auth-art{padding:20px 23px}.cm-auth-art h2{font-size:27px;margin-top:24px}.cm-auth-art p{font-size:12px}.cm-auth-points{display:none}.cm-auth-form{padding:25px 23px 28px}.cm-auth-form h3{font-size:25px}.cm-auth-close{top:10px;right:10px}.cm-warning-actions{width:100%}#caremindChatWarning{flex-wrap:wrap}.cm-warning-copy{min-width:calc(100% - 60px)}}
+</style>
+
+<style id="caremind-premium-medical-redesign-v2">
+:root{--cm-deep:#123b50;--cm-teal:#078b8c;--cm-aqua:#e9f8f6;--cm-ink:#183449;--cm-muted:#647b8b}
+html{scroll-behavior:smooth}
+body{background:#f4f8fb!important;color:var(--cm-ink)!important}
+.app{grid-template-columns:236px minmax(0,1fr)!important;max-width:1600px;margin:0 auto;background:transparent!important}
+.sidebar{background:linear-gradient(180deg,#10384b,#0d5963)!important;color:#fff!important;border-right:0!important;box-shadow:8px 0 32px #123b500d}
+.sidebar .brand strong,.sidebar .nav-item,.sidebar .nav-label,.sidebar .secure,.sidebar .sidebar-bottom{color:#effafa!important}
+.sidebar .brand small{color:#b9dfdf!important}
+.sidebar .nav-item{border-radius:12px!important;margin:4px 10px!important}
+.sidebar .nav-item.active{background:#ffffff20!important;color:#fff!important}
+.main{padding:26px clamp(16px,3vw,42px)!important;min-width:0}
+.topbar{background:#ffffffde!important;border:1px solid #e3edf2!important;border-radius:18px!important;padding:16px 20px!important;box-shadow:0 8px 30px #183b5608!important;gap:16px}
+.eyebrow{color:#078b8c!important;font-size:10px!important;font-weight:850!important;letter-spacing:1.7px!important}
+.topbar h1{color:#15394e!important;letter-spacing:-.7px!important}
+.status{border-radius:99px!important;background:#eef8f6!important;padding:8px 12px!important;color:#27666b!important}
+.caremind-medical-home{grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr)!important;gap:28px!important;margin:24px 0!important;padding:clamp(24px,4vw,48px)!important;border-radius:30px!important;background:linear-gradient(125deg,#10384f 0%,#087f8c 62%,#13aaa4 100%)!important;box-shadow:0 22px 54px #0c65701f!important;min-height:340px}
+.cm-home-copy h1{font-size:clamp(34px,4.5vw,58px)!important;max-width:660px!important;line-height:1.03!important;letter-spacing:-2px!important}
+.cm-home-copy p{font-size:15px!important;max-width:520px!important;color:#e0f5f3!important}
+.cm-home-kicker{border-color:#ffffff55!important;background:#ffffff0c!important;letter-spacing:1.1px!important}
+.cm-home-actions button{min-height:46px!important;padding:13px 18px!important;border-radius:13px!important}
+.cm-home-primary{box-shadow:0 9px 22px #062f3b38!important}
+.cm-home-primary:hover{box-shadow:0 12px 26px #062f3b4a!important}
+.cm-home-panel{background:#ffffff16!important;border:1px solid #ffffff38!important;border-radius:24px!important;padding:16px!important;box-shadow:0 18px 45px #062e3b18!important}
+.cm-medical-photo-wrap{position:relative;height:155px;overflow:hidden;border-radius:17px;margin-bottom:15px;background:#d8efed}
+.cm-medical-photo-wrap img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.88)}
+.cm-medical-photo-wrap:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,#082f3abf)}
+.cm-medical-photo-caption{position:absolute;z-index:1;left:12px;right:12px;bottom:12px;display:flex;align-items:center;gap:9px;color:white}
+.cm-medical-photo-caption strong{display:block;font-size:12px}.cm-medical-photo-caption small{display:block;color:#e0f4f3;font-size:10px;margin-top:3px}
+.cm-photo-pulse{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#73f0c4;box-shadow:0 0 0 5px #73f0c429}
+.cm-home-panel-title{letter-spacing:1.2px!important}
+.cm-home-service{background:#ffffff1b!important;border-color:#ffffff24!important;border-radius:14px!important}
+.cm-home-services{gap:16px!important;margin-bottom:24px!important}
+.cm-home-service-light{padding:20px!important;border-radius:20px!important;border-color:#e0ebef!important;box-shadow:0 10px 28px #183b5609!important;transition:transform .18s,box-shadow .18s}
+.cm-home-service-light:hover{transform:translateY(-3px);box-shadow:0 16px 32px #183b5614!important}
+.cm-home-service-light .cm-home-service-icon{width:44px;height:44px;border-radius:14px!important}
+.welcome{border-radius:22px!important;border:1px solid #e1edf1!important;box-shadow:0 10px 30px #183b5609!important;background:#fff!important;padding:26px!important}
+.metrics .metric{border:1px solid #e1edf1!important;border-radius:18px!important;background:#fff!important;padding:18px!important}
+#careAuthGate{background:rgba(9,31,47,.62)!important;backdrop-filter:blur(10px)!important;padding:20px!important}
+.cm-auth-card{width:min(960px,100%)!important;min-height:570px!important;border-radius:28px!important;grid-template-columns:.92fr 1.08fr!important;box-shadow:0 34px 110px #041c2c66!important}
+.cm-auth-art{padding:clamp(26px,4vw,44px)!important;background:linear-gradient(150deg,#10364d 0%,#087f8c 67%,#19b9a9 100%)!important}
+.cm-auth-art:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#0b3048a6,transparent 65%),url("https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1000&q=80") center/cover;opacity:.2;mix-blend-mode:screen}
+.cm-auth-brand,.cm-auth-art h2,.cm-auth-art p,.cm-auth-points,.cm-auth-art>div{position:relative;z-index:1}
+.cm-auth-brand span{border-radius:14px!important;background:#ffffff27!important}
+.cm-auth-art h2{font-size:clamp(30px,3.5vw,43px)!important;letter-spacing:-1.5px!important}
+.cm-auth-form{padding:clamp(26px,4vw,52px)!important}
+.cm-auth-eyebrow{letter-spacing:1.6px!important}
+.cm-auth-form h3{font-size:32px!important;letter-spacing:-1px!important}
+.cm-auth-tabs{background:#eff6f7!important;border-radius:14px!important;padding:5px!important}
+.cm-auth-tabs button{border-radius:10px!important}
+.cm-auth-tabs button.active{color:#087f8c!important;box-shadow:0 3px 10px #12304b12!important}
+.cm-auth-fields{gap:15px!important}
+.cm-auth-fields input{min-height:46px!important;background:#fbfdfe!important}
+.cm-auth-submit{min-height:48px!important;background:linear-gradient(120deg,#087f8c,#11a8a4)!important;border-radius:13px!important}
+#caremindChatWarning{border-radius:18px!important;box-shadow:0 22px 70px #0b294035!important}
+@media(max-width:900px){.app{grid-template-columns:1fr!important}.sidebar{display:none!important}.main{padding:14px!important}.caremind-medical-home{grid-template-columns:1fr!important}.cm-home-panel{max-width:none}.cm-home-services{grid-template-columns:repeat(2,minmax(0,1fr))!important}.cm-auth-card{min-height:0!important}}
+@media(max-width:600px){.topbar{align-items:flex-start!important;flex-direction:column!important}.top-actions{width:100%;flex-wrap:wrap!important}.caremind-medical-home{padding:22px!important;border-radius:22px!important}.cm-home-copy h1{font-size:36px!important}.cm-home-services{grid-template-columns:1fr!important}.cm-auth-card{grid-template-columns:1fr!important;max-width:460px!important}.cm-auth-art{padding:20px 23px!important}.cm-auth-art h2{font-size:28px!important;margin-top:18px!important}.cm-auth-points{display:none!important}.cm-auth-form{padding:25px 23px 28px!important}.cm-auth-form h3{font-size:27px!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✚</div><div><strong>CareMind</strong><small>Clinic intelligence</small></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <div class="nav-item"><span class="nav-icon">⌂</span> Overview</div>
+    <div class="nav-item active"><span class="nav-icon">✧</span> CareMind Health Assistant</div>
+    <div class="nav-item"><span class="nav-icon">⌕</span> Clinic services</div>
+    <div class="nav-item"><span class="nav-icon">◷</span> Your conversations</div>
+    <div class="nav-label" style="margin-top:20px">SYSTEM</div>
+    <div class="nav-item"><span class="nav-icon">⌁</span> Clinic information</div>
+    <div class="sidebar-bottom">
+      <div class="secure"><b>◈ Privacy-first design</b>Questions are sent to your configured clinic API. Avoid sharing personal identifiers.</div>
+      <div>SANJEEVANI CLINIC<br/>Frontend preview · v1.0</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><div class="eyebrow">SANJEEVANI CLINIC · PATIENT CARE</div><h1>Your health deserves thoughtful care.</h1></div>
+      <div class="top-actions">
+        <div id="careAuthActions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <a href="/login?next=%2Fask" style="color:inherit;font-weight:600">Login</a>
+          <a href="/register" style="color:inherit;font-weight:600">Create Account</a>
+        </div>
+<div class="status"><span class="dot" id="apiDot"></span><span id="apiStatus">Checking API…</span></div><button class="icon-btn" title="Refresh API status" id="refreshBtn">↻</button></div>
+    </header>
+<section class="caremind-medical-home" id="caremindMedicalHome">
+ <div class="cm-home-copy"><div class="cm-home-kicker">✚ &nbsp; SANJEEVANI CLINIC · CAREMIND AI</div><h1>Better care starts with a conversation.</h1><p>Friendly clinic support, appointment guidance, and helpful information — all in one place.</p><div class="cm-home-actions"><button type="button" class="cm-home-primary" id="cmHomeStartChat">Chat with CareMind →</button><button type="button" class="cm-home-secondary" id="cmHomeLogin">Patient login</button></div><div class="cm-home-trust"><span>Patient-focused support</span><span>Appointment guidance</span><span>Private patient access</span></div></div>
+ <div class="cm-home-panel"><div class="cm-medical-photo-wrap"><img id="cmMedicalPhoto" src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=85" alt="Doctor speaking with a patient in a modern clinic" loading="lazy"><div class="cm-medical-photo-caption"><span class="cm-photo-pulse"></span><div><strong>Care that puts you first</strong><small>Support for your clinic journey</small></div></div></div><div class="cm-home-panel-title">How we can help</div><div class="cm-home-service"><div class="cm-home-service-icon">🩺</div><div><strong>Clinic assistance</strong><small>Get help finding the right clinic service</small></div></div><div class="cm-home-service"><div class="cm-home-service-icon">📅</div><div><strong>Appointment support</strong><small>Explore doctors and appointment options</small></div></div><div class="cm-home-service"><div class="cm-home-service-icon">💬</div><div><strong>AI health assistant</strong><small>Chat access is available after patient login</small></div></div></div>
+</section><section class="cm-home-services" aria-label="Clinic services"><div class="cm-home-service-light"><div class="cm-home-service-icon">👨‍⚕️</div><strong>Doctor guidance</strong><small>Get help navigating available doctors and specialties.</small></div><div class="cm-home-service-light"><div class="cm-home-service-icon">🗓️</div><strong>Appointment booking</strong><small>Find appointment options through the clinic assistant.</small></div><div class="cm-home-service-light"><div class="cm-home-service-icon">💚</div><strong>Patient-first support</strong><small>A clear, friendly way to explore clinic services.</small></div></section>
+
+    <section class="welcome">
+      <div class="welcome-tag">PERSONALISED CLINIC SUPPORT</div>
+      <h2>Explore services, get help navigating appointments, and find the right next step for your care.</h2>
+      <p>Explore clinic services, get help finding the right care, and learn when to contact a healthcare professional.</p>
+    </section>
+
+    <section class="metrics">
+      <div class="metric"><div class="metric-icon">⌕</div><div><strong>Clinic information</strong><span>Find relevant clinic guidance</span></div></div>
+      <div class="metric"><div class="metric-icon">✧</div><div><strong>Helpful responses</strong><span>Guidance informed by clinic information</span></div></div>
+      <div class="metric"><div class="metric-icon">◈</div><div><strong>Clear information</strong><span>Sources shown when available</span></div></div>
+    </section>
+
+    <section class="workspace">
+      <div class="chat-card">
+        <div class="chat-head">
+          <div class="assistant-id"><div class="avatar">✚</div><div><strong>CareMind Assistant</strong><small>Clinic knowledge · RAG powered</small></div></div>
+          <span class="pill">● READY TO TEST</span>
+        </div>
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="message"><div class="mini-avatar">✚</div><div class="bubble">Hi! I can help you explore the clinic knowledge base. Ask a question below and I’ll send it to your existing <b>POST /ask</b> endpoint.<br/><br/>For example: <i>When should I see a doctor for fever?</i></div></div>
+        </div>
+        <div class="typing" id="typing">Searching knowledge base and preparing answer…</div>
+        <div class="suggestions">
+          <button class="suggestion" data-q="When should I see a doctor for fever?">Fever guidance</button>
+          <button class="suggestion" data-q="What home-care guidance is available?">Home care</button>
+          <button class="suggestion" data-q="What are the isolation guidelines?">Isolation guidelines</button>
+        </div>
+        <form class="composer" id="chatForm">
+          <div class="composer-wrap"><button class="send" id="micBtn" type="button" aria-label="Speak your question" title="Speak your question">🎙️</button><textarea id="question" rows="1" placeholder="Ask a clinic-related question…" aria-label="Your question" required></textarea><button class="send" id="sendBtn" type="submit">Ask AI&nbsp; ↗</button></div>
+          <div class="voice-status" id="voiceStatus" role="status"></div>
+          <div class="fineprint">For informational support only. This assistant does not diagnose conditions or replace a healthcare professional.</div>
+        </form>
+      </div>
+
+      <aside class="side-card">
+        <h3>Ask better questions</h3><p class="sub">A few useful prompts to test retrieval quality and source grounding.</p>
+        <div class="tip"><div class="tip-icon">♡</div><div><b>Symptoms & care</b><span>Ask about general guidance found in your documents.</span></div></div>
+        <div class="tip"><div class="tip-icon">⌕</div><div><b>Test source retrieval</b><span>Use terms that appear in your knowledge base and check the returned sources.</span></div></div>
+        <div class="tip"><div class="tip-icon">✓</div><div><b>Test unknown information</b><span>Ask for a detail not in the documents and check whether the assistant admits the gap.</span></div></div>
+        <div class="disclaimer"><b>Medical safety</b><br/>Do not rely on AI alone for urgent symptoms. For severe or rapidly worsening symptoms, seek urgent medical care.</div>
+      </aside>
+    </section>
+    <footer class="footer"><span>CareMind · RAG Clinic Assistant</span><span>Connected to your local FastAPI backend</span></footer>
+  </main>
+</div>
+<div class="voice-agent-overlay" id="voiceAgentModal" role="dialog"
+     aria-modal="true" aria-label="CareMind voice agent">
+  <section class="voice-agent-panel">
+    <div class="voice-agent-top">
+      <strong>✦ CareMind Voice</strong>
+      <button type="button" id="voiceAgentClose" aria-label="Close voice agent">✕</button>
+    </div>
+    <div class="voice-orb" id="voiceOrb" aria-hidden="true">✦</div>
+    <h2 id="voiceAgentTitle">Talk to CareMind</h2>
+    <div class="voice-agent-status" id="voiceAgentStatus">Tap the microphone to start</div>
+    <div class="voice-agent-transcript" id="voiceAgentTranscript">
+      Your conversation will also appear in chat.
+    </div>
+    <div class="voice-agent-controls">
+      <button type="button" id="voiceAgentChat" title="Return to chat" aria-label="Return to chat">☰</button>
+      <button type="button" class="voice-start" id="voiceAgentMic" title="Start listening" aria-label="Start listening">🎙</button>
+      <button type="button" class="voice-end" id="voiceAgentEnd" title="End voice session" aria-label="End voice session">☎</button>
+    </div>
+    <div class="voice-agent-note">Informational support only — not a medical diagnosis.</div>
+  </section>
+</div>
+<script>
+(() => {
+  const API_BASE = window.location.origin;
+  const messages = document.getElementById('messages');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('question');
+  const sendBtn = document.getElementById('sendBtn');
+  const micBtn = document.getElementById('micBtn');
+  const typing = document.getElementById('typing');
+  const apiDot = document.getElementById('apiDot');
+  const apiStatus = document.getElementById('apiStatus');
+
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  let currentAudio = null;
+  let currentAudioUrl = null;
+
+  // Send timing numbers only; never send transcripts, questions, or answers.
+  function reportPerfMetric(stage, durationMs) {
+    const value = Number(durationMs);
+    if (!Number.isFinite(value) || value < 0 || value > 120000) return;
+
+    fetch('/api/performance', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        stage: stage,
+        duration_ms: Math.round(value)
+      }),
+      keepalive: true
+    }).catch(() => {
+      // Performance logging must never interrupt the chat.
+    });
+  }
+
+  function speakWithBrowser(text) {
+    const ttsRequestedAt = performance.now();
+    return new Promise((resolve, reject) => {
+      if (!('speechSynthesis' in window)) {
+        reject(new Error('Browser speech synthesis unsupported.'));
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      const hasHindi = /[\u0900-\u097F]/.test(text);
+
+      const voice = hasHindi
+        ? voices.find(v => /^hi(-|$)/i.test(v.lang))
+        : voices.find(v => /^en-IN$/i.test(v.lang))
+          || voices.find(v => /^en/i.test(v.lang));
+
+      if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang || (hasHindi ? 'hi-IN' : 'en-IN');
+      let ttsStartedAt = 0;
+      utterance.onstart = () => {
+        ttsStartedAt = performance.now();
+        const durationMs = Math.round(ttsStartedAt - ttsRequestedAt);
+        console.info('CAREMIND_PERF tts_start_delay_ms', durationMs);
+        reportPerfMetric('tts_start_delay_ms', durationMs);
+      };
+      utterance.onend = () => {
+        const durationMs = Math.round(
+          performance.now() - (ttsStartedAt || ttsRequestedAt)
+        );
+        console.info('CAREMIND_PERF tts_speech_ms', durationMs);
+        reportPerfMetric('tts_speech_ms', durationMs);
+        resolve();
+      };
+      utterance.onerror = e => {
+        const durationMs = Math.round(performance.now() - ttsRequestedAt);
+        console.info('CAREMIND_PERF tts_error_ms', durationMs);
+        reportPerfMetric('tts_error_ms', durationMs);
+        reject(new Error(e.error || 'Speech failed'));
+      };
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
+  async function speakAnswer(text, button) {
+    if (!text || !text.trim()) return;
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Generating audio…';
+
+    try {
+      const response = await fetch('/api/voice', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: text.trim()})
+      });
+
+      if (!response.ok) {
+        let detail = 'Voice generation failed.';
+        try { detail = (await response.json()).detail || detail; } catch (_) {}
+        throw new Error(detail);
+      }
+
+      const blob = await response.blob();
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+
+      currentAudioUrl = URL.createObjectURL(blob);
+      currentAudio = new Audio(currentAudioUrl);
+      button.textContent = '▶ Playing…';
+
+      currentAudio.onended = () => {
+        button.textContent = '🔊 Listen to answer';
+        button.disabled = false;
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+        currentAudio = null;
+        if (voiceMode && voiceSessionActive) {
+          voiceWaiting = false;
+          voiceStatus('Your turn — tap the microphone to speak');
+        }
+      };
+
+      currentAudio.onerror = () => {
+        button.textContent = original;
+        button.disabled = false;
+        setVoiceStatus('Could not play generated audio.');
+      };
+
+      await currentAudio.play();
+    } catch (err) {
+      console.warn('ElevenLabs failed; using browser TTS:', err.message);
+
+      try {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+        if (currentAudioUrl) {
+          URL.revokeObjectURL(currentAudioUrl);
+          currentAudioUrl = null;
+        }
+
+        button.textContent = '🔊 Speaking…';
+        await speakWithBrowser(text.trim());
+
+        button.textContent = '🔊 Listen to answer';
+        button.disabled = false;
+        if (voiceMode && voiceSessionActive) {
+          voiceWaiting = false;
+          voiceStatus('Your turn — tap the microphone to speak');
+        }
+      } catch (fallbackError) {
+        button.textContent = original;
+        button.disabled = false;
+        setVoiceStatus('Voice playback failed. Check browser voice support.');
+        if (voiceMode && voiceSessionActive) {
+          voiceWaiting = false;
+          voiceStatus('Voice playback failed. Tap the microphone to retry.');
+        }
+        console.error('Browser TTS fallback failed:', fallbackError);
+      }
+    }
+  }
+
+  function setVoiceStatus(message) {
+    const status = document.getElementById('voiceStatus');
+    if (status) status.textContent = message || '';
+  }
+
+  function addMessage(text, role='assistant', sources=[], chunks=[]) {
+    const row = document.createElement('div');
+    row.className = 'message ' + (role === 'user' ? 'user' : '');
+    const avatar = document.createElement('div');
+    avatar.className = 'mini-avatar';
+    avatar.textContent = role === 'user' ? 'You' : '✚';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = escapeHTML(text).replace(/\n/g, '<br/>');
+    if (sources.length) {
+      const sourceBox = document.createElement('div');
+      sourceBox.className = 'sources';
+      const heading = document.createElement('b');
+      heading.textContent = 'Retrieved sources';
+      sourceBox.appendChild(heading);
+      sources.forEach(s => {
+        const chip = document.createElement('span');
+        chip.className = 'source-chip';
+        chip.textContent = typeof s === 'string'
+          ? s : (s.source || s.filename || s.name || 'Unknown source');
+        sourceBox.appendChild(chip);
+      });
+      bubble.appendChild(sourceBox);
+    }
+
+    if (role !== 'user' && Array.isArray(chunks) && chunks.length) {
+      const details = document.createElement('details');
+      details.className = 'sources';
+      const summary = document.createElement('summary');
+      summary.textContent = `Retrieved passages (${chunks.length})`;
+      details.appendChild(summary);
+
+      chunks.forEach((chunk, index) => {
+        const item = document.createElement('div');
+        item.className = 'retrieved-passage';
+
+        const title = document.createElement('b');
+        title.textContent =
+          `${chunk.source || 'Unknown source'} · Chunk ${chunk.chunk_id ?? index + 1}`;
+        item.appendChild(title);
+
+        if (chunk.score !== undefined && Number.isFinite(Number(chunk.score))) {
+          const score = document.createElement('div');
+          score.textContent = `Cosine similarity: ${Number(chunk.score).toFixed(4)}`;
+          item.appendChild(score);
+        }
+
+        const passage = document.createElement('p');
+        passage.textContent = chunk.text || 'No passage text returned.';
+        item.appendChild(passage);
+        details.appendChild(item);
+      });
+
+      bubble.appendChild(details);
+    }
+    row.append(avatar, bubble);
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+    return bubble;
+  }
+  async function checkAPI() {
+    apiStatus.textContent = 'Checking API…'; apiDot.classList.remove('online');
+    try {
+      const r = await fetch(API_BASE + '/openapi.json', {cache:'no-store'});
+      if (!r.ok) throw new Error('OpenAPI returned ' + r.status);
+      const spec = await r.json();
+      const hasAsk = !!(spec.paths && spec.paths['/ask'] && spec.paths['/ask'].post);
+      apiDot.classList.toggle('online', hasAsk);
+      apiStatus.textContent = hasAsk ? 'API connected · /ask found' : 'API online · /ask not found';
+    } catch (e) { apiStatus.textContent = 'API not reachable'; apiDot.classList.remove('online'); }
+  }
+  function resolveSchema(spec, schema) {
+    if (!schema) return {};
+    if (schema.$ref) {
+      const name = schema.$ref.split('/').pop();
+      return resolveSchema(spec, spec.components?.schemas?.[name] || {});
+    }
+    return schema;
+  }
+  function chooseField(properties) {
+    const keys = Object.keys(properties || {});
+    if (!keys.length) return null;
+    const preferred = ['question','query','message','prompt','user_input','text','input'];
+    return preferred.find(k => keys.includes(k)) || keys[0];
+  }
+  function extractAnswer(data) {
+    if (typeof data === 'string') return data;
+    if (!data || typeof data !== 'object') return JSON.stringify(data);
+    for (const key of ['answer','response','result','message','output','reply','detail']) {
+      if (typeof data[key] === 'string') return data[key];
+    }
+    if (data.data && typeof data.data === 'object') return extractAnswer(data.data);
+    return JSON.stringify(data, null, 2);
+  }
+  function extractSources(data) {
+    if (!data || typeof data !== 'object') return [];
+    for (const key of ['sources','source_documents','documents','citations']) {
+      if (Array.isArray(data[key])) return data[key];
+    }
+    if (Array.isArray(data.retrieved_chunks)) return data.retrieved_chunks.map(x => x.source || x.metadata?.source || x.filename || x);
+    return [];
+  }
+  // Reuse the existing Sanjeevani login session.
+  function getCareMindToken() {
+    return localStorage.getItem("token");
+  }
+
+  function getCareMindAuthHeaders() {
+    const token = getCareMindToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  async function askAPIStream(question, onToken) {
+    const apiStartedAt = performance.now();
+    const formData = new FormData();
+    formData.append("question", question);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    let answer = "", sources = [], retrieved_chunks = [], buffer = "";
+    let firstTokenLogged = false;
+    let requestId = "pending";
+    let frontendFirstTokenMs = null;
+
+    try {
+      const token = getCareMindToken();
+      if (!token) {
+        throw new Error("Please log in or create an account before chatting.");
+      }
+      const response = await fetch("/api/ask/stream", {
+        method: "POST",
+        headers: getCareMindAuthHeaders(),
+        body: formData,
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        let detail = body;
+        try { detail = JSON.parse(body).detail || body; } catch (_) {}
+        throw new Error(detail || `HTTP ${response.status}`);
+      }
+      if (!response.body) throw new Error("This browser does not support streamed responses.");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const processLine = line => {
+        if (!line.trim()) return;
+        const event = JSON.parse(line);
+        if (event.request_id) requestId = event.request_id;
+        if (event.type === "token") {
+          if (!firstTokenLogged) {
+            frontendFirstTokenMs = Math.round(performance.now() - apiStartedAt);
+            console.info("CAREMIND_PERF frontend_ttft_ms", frontendFirstTokenMs);
+            firstTokenLogged = true;
+          }
+          answer += event.text || "";
+          onToken(answer);
+        } else if (event.type === "done") {
+          sources = Array.isArray(event.sources) ? event.sources : [];
+          retrieved_chunks = Array.isArray(event.retrieved_chunks) ? event.retrieved_chunks : [];
+        } else if (event.type === "error") {
+          throw new Error(event.message || "Streaming request failed.");
+        }
+      };
+      while (true) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, {stream: true});
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) processLine(line);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) processLine(buffer);
+    } catch (err) {
+      if (err.name === "AbortError") throw new Error("The clinic API took over 45 seconds. Please try again.");
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    const totalMs = Math.round(performance.now() - apiStartedAt);
+    console.info("CAREMIND_REQUEST_SUMMARY", {
+      request_id: requestId,
+      frontend_total_ms: totalMs,
+      frontend_ttft_ms: frontendFirstTokenMs,
+      answer_chars: answer.length,
+      status: "success"
+    });
+    reportPerfMetric("api_fetch_ms", totalMs);
+    return {answer: answer.trim() || "RAG returned an empty answer.", sources, retrieved_chunks};
+  }
+
+
+  function isBookingIntent(question) {
+    return /\b(book|booking|appointment|appointments)\b|doctor appointment|appointment book|अपॉइंटमेंट|डॉक्टर.*बुक/i.test(question);
+  }
+
+  async function startAppointmentBooking() {
+    const token = getCareMindToken();
+    const row = document.createElement('div');
+    row.className = 'message';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'mini-avatar';
+    avatar.textContent = '✚';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    row.append(avatar, bubble);
+    messages.appendChild(row);
+
+    const say = text => {
+      const p = document.createElement('p');
+      p.textContent = text;
+      bubble.appendChild(p);
+      messages.scrollTop = messages.scrollHeight;
+    };
+
+    if (!token) {
+      say('Please log in with your patient account before booking an appointment.');
+
+      const link = document.createElement('a');
+      link.href = '/login?next=%2Fask';
+      link.textContent = 'Log in to continue';
+      link.style.cssText = 'display:inline-block;margin-top:8px;color:#087f8c;font-weight:700;';
+      bubble.appendChild(link);
+      return 'Please log in with your patient account to continue booking.';
+    }
+
+    say('Choose a doctor, appointment date and available time.');
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'display:grid;gap:10px;margin-top:12px;min-width:220px;';
+
+    function makeLabel(text, control) {
+      const wrap = document.createElement('label');
+      wrap.style.cssText = 'display:grid;gap:5px;font-size:12px;font-weight:600;';
+      wrap.appendChild(document.createTextNode(text));
+      control.style.cssText = 'width:100%;padding:9px;border:1px solid #dce6ef;border-radius:9px;background:white;color:#17233b;';
+      wrap.appendChild(control);
+      panel.appendChild(wrap);
+    }
+
+    const doctorSelect = document.createElement('select');
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+
+    const localToday = new Date();
+    const todayString = [
+      localToday.getFullYear(),
+      String(localToday.getMonth() + 1).padStart(2, '0'),
+      String(localToday.getDate()).padStart(2, '0')
+    ].join('-');
+
+    dateInput.min = todayString;
+    dateInput.value = todayString;
+
+    const slotSelect = document.createElement('select');
+    const bookButton = document.createElement('button');
+    bookButton.type = 'button';
+    bookButton.textContent = 'Book appointment';
+    bookButton.style.cssText = 'padding:11px;border:0;border-radius:10px;background:#087f8c;color:white;font-weight:700;cursor:pointer;';
+
+    const status = document.createElement('p');
+    status.style.cssText = 'font-size:12px;margin:0;';
+
+    makeLabel('Doctor', doctorSelect);
+    makeLabel('Appointment date', dateInput);
+    makeLabel('Available time', slotSelect);
+    panel.append(bookButton, status);
+    bubble.appendChild(panel);
+
+    const option = (text, value = '') => {
+      const el = document.createElement('option');
+      el.value = value;
+      el.textContent = text;
+      return el;
+    };
+
+    async function loadSlots() {
+      slotSelect.replaceChildren(option('Loading available times…'));
+      bookButton.disabled = true;
+      status.textContent = '';
+
+      if (!doctorSelect.value || !dateInput.value) {
+        slotSelect.replaceChildren(option('Choose a doctor and date'));
+        return;
+      }
+
+      try {
+        const url = `/api/booking/slots?doctor_id=${encodeURIComponent(doctorSelect.value)}&slot_date=${encodeURIComponent(dateInput.value)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.detail || 'Could not load slots.');
+
+        slotSelect.replaceChildren();
+        if (!data.slots || data.slots.length === 0) {
+          slotSelect.appendChild(option('No available slots'));
+          status.textContent = 'No available times for this date. Try another date.';
+          return;
+        }
+
+        slotSelect.appendChild(option('Select a time'));
+        data.slots.forEach(slot => {
+          const timeLabel = String(slot.slot_time).slice(0, 5);
+          slotSelect.appendChild(option(timeLabel, String(slot.slot_id)));
+        });
+        bookButton.disabled = false;
+      } catch (error) {
+        slotSelect.replaceChildren(option('Could not load slots'));
+        status.textContent = error.message;
+      }
+    }
+
+    try {
+      const response = await fetch('/api/booking/doctors');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not load doctors.');
+
+      doctorSelect.replaceChildren(option('Select a doctor'));
+      (data.doctors || []).forEach(doctor => {
+        const el = option(
+          `${doctor.doctor_name} · ${doctor.specialty || 'General'}`,
+          String(doctor.doctor_id)
+        );
+        doctorSelect.appendChild(el);
+      });
+
+      if (!data.doctors || !data.doctors.length) {
+        say('No doctors are currently available.');
+        return 'No doctors are currently available.';
+      }
+    } catch (error) {
+      status.textContent = error.message;
+      say('Could not load doctors. Please try again.');
+      return 'Could not load doctors.';
+    }
+
+    doctorSelect.addEventListener('change', loadSlots);
+
+    dateInput.addEventListener('change', loadSlots);
+    await loadSlots();
+
+    bookButton.addEventListener('click', async () => {
+      if (!doctorSelect.value || !dateInput.value || !slotSelect.value) {
+        status.textContent = 'Please select a doctor, date and available time.';
+        return;
+      }
+
+      bookButton.disabled = true;
+      status.textContent = 'Booking securely…';
+
+      try {
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCareMindAuthHeaders()
+          },
+          body: JSON.stringify({
+            doctor_id: Number(doctorSelect.value),
+            slot_id: Number(slotSelect.value),
+            appointment_date: dateInput.value
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) {
+            status.textContent = 'Your login session may have expired. Please log in again.';
+          } else {
+            status.textContent = data.detail || 'Booking failed. Please try another slot.';
+          }
+          await loadSlots();
+          return;
+        }
+
+        const confirmationText =
+          `Appointment #${data.appointment_id} created with ${data.doctor} on ${data.appointment_date} at ${data.appointment_time}. Fee: ${data.consultation_fee == null ? "Not configured" : "₹" + data.consultation_fee}. Payment is still pending.`;
+
+        // Show confirmation once in chat; lock this booking panel after success.
+        panel.replaceChildren();
+        status.textContent = '';
+        bookButton.disabled = true;
+        addMessage(confirmationText, 'assistant');
+
+        if (voiceMode && voiceSessionActive) {
+          try {
+            await speakWithBrowser(confirmation.textContent);
+          } catch (speechError) {
+            console.error('Booking confirmation speech failed:', speechError);
+          }
+        }
+      } catch (error) {
+        status.textContent = 'Could not complete booking. Please try again.';
+        console.error('Appointment booking error:', error);
+      } finally {
+        // The button is removed on success; allow retry after failure.
+        if (bookButton.isConnected) bookButton.disabled = false;
+      }
+    });
+
+    return 'Choose a doctor, date and time in the appointment booking panel.';
+  }
+
+  // CARE_MIND_AUTH_GUARD_V1: lock text and voice chat until login.
+  function requireCareMindLogin() {
+    if (getCareMindToken()) return true;
+    openCareMindAuth("login");
+    return false;
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const question = input.value.trim();
+    if (!question) return;
+    if (!requireCareMindLogin()) {
+      input.value = "";
+      return;
+    }
+
+    if (isBookingIntent(question)) {
+      addMessage(question, 'user');
+      input.value = '';
+      if (voiceMode && voiceSessionActive) voiceWaiting = true;
+
+      try {
+        const responseText = await startAppointmentBooking();
+        if (voiceMode && voiceSessionActive) {
+          voiceStatus('Speaking response…');
+          try {
+            await speakWithBrowser(responseText);
+          } catch (speechError) {
+            console.error('Booking prompt speech failed:', speechError);
+          }
+        }
+      } catch (error) {
+        addMessage('Could not start appointment booking: ' + error.message, 'assistant');
+      } finally {
+        if (voiceMode && voiceSessionActive) {
+          voiceWaiting = false;
+          voiceStatus('Booking panel ready. Tap the microphone to continue.');
+        }
+      }
+      return;
+    }
+    addMessage(question, 'user');
+    input.value = '';
+    sendBtn.disabled = true; sendBtn.textContent = 'Thinking…'; typing.style.display = 'block';
+    try {
+      let streamBubble = null;
+      const result = await askAPIStream(question, streamedText => {
+        if (!streamBubble) streamBubble = addMessage('', 'assistant');
+        streamBubble.innerHTML = escapeHTML(streamedText).replace(/\n/g, '<br/>');
+        messages.scrollTop = messages.scrollHeight;
+      });
+      const answer = result.answer || 'The API returned an empty answer.';
+      if (streamBubble && streamBubble.parentElement) streamBubble.parentElement.remove();
+      addMessage(answer, 'assistant', result.sources, result.retrieved_chunks);
+
+      // Automatically speak the RAG answer in voice-agent mode only.
+      if (voiceMode && voiceSessionActive) {
+        voiceStatus('Speaking answer…');
+        try {
+          await speakWithBrowser(answer);
+        } catch (speechError) {
+          console.error('CareMind browser speech failed:', speechError);
+          voiceStatus('Answer received, but speech failed. Check browser audio/voices.');
+        } finally {
+          voiceWaiting = false;
+          if (voiceSessionActive) {
+            voiceStatus('Your turn — tap the microphone to speak');
+          }
+        }
+      }
+    } catch (err) {
+      addMessage('I could not complete the request.\n\n' + err.message, 'assistant');
+      if (voiceMode && voiceSessionActive) {
+        voiceWaiting = false;
+        voiceStatus('Request failed. Tap the microphone to try again.');
+      }
+    } finally {
+      sendBtn.disabled = false; sendBtn.innerHTML = 'Ask AI&nbsp; ↗'; typing.style.display = 'none'; input.focus();
+    }
+  });
+  document.querySelectorAll('.suggestion').forEach(btn => btn.addEventListener('click', () => {
+    input.value = btn.dataset.q || ''; input.focus();
+  }));
+  document.getElementById('refreshBtn').addEventListener('click', checkAPI);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+
+
+  // CareMind voice-agent mode
+  const voiceModal = document.getElementById('voiceAgentModal');
+  const voiceOrb = document.getElementById('voiceOrb');
+  const voiceStatusEl = document.getElementById('voiceAgentStatus');
+  const voiceTranscriptEl = document.getElementById('voiceAgentTranscript');
+  const voiceMic = document.getElementById('voiceAgentMic');
+  const voiceTitle = document.getElementById('voiceAgentTitle');
+  let voiceMode = false;
+  let voiceRecognition = null;
+  let voiceWaiting = false;
+  let voiceSessionActive = false;
+
+  function voiceStatus(message) {
+    if (voiceStatusEl) voiceStatusEl.textContent = message;
+    setVoiceStatus(message);
+  }
+
+  function openVoiceAgent() {
+    if (!voiceModal) return;
+    voiceMode = true;
+    voiceSessionActive = true;
+    voiceModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    voiceStatus('Tap the microphone and speak');
+    voiceTitle.textContent = 'Talk to CareMind';
+  }
+
+  function closeVoiceAgent() {
+    voiceMode = false;
+    voiceSessionActive = false;
+    voiceWaiting = false;
+    if (voiceRecognition) {
+      try { voiceRecognition.abort(); } catch (_) {}
+      voiceRecognition = null;
+    }
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    if (currentAudioUrl) {
+      URL.revokeObjectURL(currentAudioUrl);
+      currentAudioUrl = null;
+    }
+    if (voiceModal) voiceModal.classList.remove('open');
+    document.body.style.overflow = '';
+    if (voiceOrb) voiceOrb.classList.remove('listening');
+  }
+
+  function startVoiceListening() {
+    if (!voiceSessionActive || voiceWaiting) return;
+    if (!SpeechRecognitionAPI) {
+      voiceStatus('Speech recognition unsupported. Please use the chat input.');
+      return;
+    }
+    if (voiceRecognition) {
+      try { voiceRecognition.abort(); } catch (_) {}
+      voiceRecognition = null;
+    }
+
+    const recognition = new SpeechRecognitionAPI();
+    voiceRecognition = recognition;
+    recognition.lang = 'en-IN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let speechSubmitTimer = null;
+    let sttStartedAt = 0;
+    let sttFinalLogged = false;
+
+    recognition.onstart = () => {
+      sttStartedAt = performance.now();
+      sttFinalLogged = false;
+      if (voiceOrb) voiceOrb.classList.add('listening');
+      voiceStatus('Listening… Boliye, main sun raha hoon.');
+      voiceMic.textContent = '⏹';
+    };
+
+    recognition.onresult = event => {
+      let transcript = '';
+      let hasFinal = false;
+
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript + ' ';
+        if (event.results[i].isFinal) hasFinal = true;
+      }
+
+      transcript = transcript.trim();
+      if (transcript && voiceTranscriptEl) {
+        voiceTranscriptEl.textContent = 'You: ' + transcript;
+      }
+
+      if (transcript && currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        voiceStatus('You interrupted. Listening to you…');
+      }
+
+      if (hasFinal && transcript) {
+        if (!sttFinalLogged && sttStartedAt) {
+          sttFinalLogged = true;
+          const sttDurationMs = Math.round(performance.now() - sttStartedAt);
+          console.info('CAREMIND_PERF stt_to_final_transcript_ms', sttDurationMs);
+          reportPerfMetric('stt_to_final_transcript_ms', sttDurationMs);
+        }
+        clearTimeout(speechSubmitTimer);
+        voiceStatus('Listening… finish your sentence; I am waiting.');
+        speechSubmitTimer = setTimeout(() => {
+          if (!voiceSessionActive || voiceWaiting) return;
+
+          voiceWaiting = true;
+          input.value = transcript;
+          if (voiceTranscriptEl) voiceTranscriptEl.textContent = 'You: ' + transcript;
+          voiceStatus('Processing your question…');
+          try { recognition.stop(); } catch (_) {}
+          form.requestSubmit();
+        }, 1400);
+      }
+    };
+
+    recognition.onerror = event => {
+      if (event.error !== 'aborted' && voiceSessionActive) {
+        voiceStatus('Mic issue: ' + event.error + '. Tap mic to retry.');
+      }
+    };
+
+    recognition.onend = () => {
+      if (voiceRecognition === recognition) voiceRecognition = null;
+      voiceMic.textContent = '🎙';
+      if (voiceOrb) voiceOrb.classList.remove('listening');
+      if (voiceSessionActive && !voiceWaiting && !currentAudio) {
+        voiceStatus('Tap the microphone to speak again');
+      }
+    };
+
+    try { recognition.start(); }
+    catch (_) { voiceStatus('Could not start microphone. Check browser permissions.'); }
+  }
+
+  if (voiceMic) voiceMic.addEventListener('click', startVoiceListening);
+  document.getElementById('voiceAgentClose')?.addEventListener('click', closeVoiceAgent);
+  document.getElementById('voiceAgentEnd')?.addEventListener('click', closeVoiceAgent);
+  document.getElementById('voiceAgentChat')?.addEventListener('click', closeVoiceAgent);
+  voiceModal?.addEventListener('click', event => {
+    if (event.target === voiceModal) closeVoiceAgent();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && voiceModal?.classList.contains('open')) closeVoiceAgent();
+  });
+
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (micBtn) {
+    if (!SpeechRecognitionAPI) {
+      micBtn.title = 'Speech recognition is not supported in this browser';
+      micBtn.addEventListener('click', () => setVoiceStatus(
+        'Microphone speech recognition is unavailable here. Please type your question instead.'
+      ));
+    } else {
+      micBtn.addEventListener('click', () => {
+        openVoiceAgent();
+        return;
+        const recognition = new SpeechRecognitionAPI();
+        recognition.lang = 'en-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        micBtn.disabled = true;
+        micBtn.classList.add('listening');
+        micBtn.textContent = '⏺';
+        setVoiceStatus('Listening… Hindi mein apna sawaal boliye.');
+        recognition.onresult = event => {
+          const transcript = event.results[0][0].transcript.trim();
+          input.value = transcript;
+          setVoiceStatus('Recognized: ' + transcript);
+          if (transcript) form.requestSubmit();
+        };
+        recognition.onerror = event => {
+          setVoiceStatus('Microphone error: ' + event.error + '. You can type your question instead.');
+        };
+        recognition.onend = () => {
+          micBtn.disabled = false;
+          micBtn.classList.remove('listening');
+          micBtn.textContent = '🎙️';
+        };
+        try { recognition.start(); }
+        catch (err) {
+          micBtn.disabled = false;
+          micBtn.classList.remove('listening');
+          micBtn.textContent = '🎙️';
+          setVoiceStatus('Could not start the microphone. Check browser permission.');
+        }
+      });
+    }
+  }
+
+  checkAPI();
+})();
+</script>
+
+
+
+
+<script>
+(function setupCareAuthUI() {
+  const area = document.getElementById("careAuthActions");
+  if (!area) return;
+
+  const token = localStorage.getItem("token");
+  const name = localStorage.getItem("name");
+
+  area.replaceChildren();
+
+  if (!token) {
+    const login = document.createElement("a");
+    login.href = "/login?next=%2Fask";
+    login.textContent = "Login";
+    login.style.cssText = "color:inherit;font-weight:600";
+
+    const signup = document.createElement("a");
+    signup.href = "/register";
+    signup.textContent = "Create Account";
+    signup.style.cssText = "color:inherit;font-weight:600";
+
+    area.append(login, signup);
+    return;
+  }
+
+  const greeting = document.createElement("span");
+  greeting.textContent = name ? `Hi, ${name}` : "Logged in";
+  greeting.style.cssText = "font-size:13px;font-weight:600";
+
+  const logout = document.createElement("button");
+  logout.type = "button";
+  logout.textContent = "Logout";
+  logout.style.cssText = "padding:8px 12px;cursor:pointer";
+  logout.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
+    location.href = "/login";
+  });
+
+  area.append(greeting, logout);
+})();
+</script>
+
+
+<!-- CAREMIND_HOME_AUTH_POLISH_V1: popup is intentionally NOT opened on page load -->
+<div id="careAuthGate" hidden aria-modal="true" role="dialog" aria-labelledby="cmAuthTitle">
+ <section class="cm-auth-card">
+  <button class="cm-auth-close" id="cmAuthClose" type="button" aria-label="Close login">×</button>
+  <aside class="cm-auth-art">
+   <div class="cm-auth-brand"><span>✚</span><div>CareMind AI<div style="font-size:10px;letter-spacing:1.5px;font-weight:600;opacity:.72;margin-top:3px">SANJEEVANI CLINIC</div></div></div>
+   <div><h2>Your health,<br>our priority.</h2><p>Personalized clinic assistance, appointment support, and health guidance — all in one place.</p><div class="cm-auth-points"><div class="cm-auth-point"><b>✓</b> Patient-first, secure access</div><div class="cm-auth-point"><b>✚</b> Healthcare assistant available</div><div class="cm-auth-point"><b>♡</b> Your care journey, made simpler</div></div></div>
+   <div style="font-size:11px;color:#d4f2ef;position:relative;z-index:1">Care that listens. Support that cares.</div>
+  </aside>
+  <div class="cm-auth-form">
+   <div class="cm-auth-eyebrow">Patient portal</div><h3 id="cmAuthTitle">Welcome back</h3><p class="cm-auth-sub" id="cmAuthSubtitle">Log in to continue chatting with your CareMind assistant.</p>
+   <div class="cm-auth-tabs"><button type="button" id="cmLoginTab" class="active">Login</button><button type="button" id="cmSignupTab">Create account</button></div>
+   <form id="cmLoginForm" class="cm-auth-fields"><label>Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label><label>Password<input name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required></label><button class="cm-auth-submit" type="submit">Login to CareMind →</button></form>
+   <form id="cmSignupForm" class="cm-auth-fields" hidden><label>Full name<input name="full_name" autocomplete="name" placeholder="Your full name" required></label><label>Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label><label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="Create a password" required></label><label>Confirm password<input name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Enter password again" required></label><button class="cm-auth-submit" type="submit">Create patient account →</button></form>
+   <div id="cmAuthMessage" class="cm-auth-message" role="status" aria-live="polite"></div><div class="cm-auth-foot">By continuing, you agree to use CareMind responsibly. For emergencies, contact local emergency services.</div>
+  </div>
+ </section>
+</div>
+<div id="caremindChatWarning" hidden role="status" aria-live="polite"><div class="cm-warning-icon">🔒</div><div class="cm-warning-copy"><strong>Login required to chat</strong><span>Please log in or create a patient account to use chat and voice assistance.</span></div><div class="cm-warning-actions"><button type="button" id="cmWarningLogin" class="primary">Login</button><button type="button" id="cmWarningSignup">Sign up</button><button type="button" id="cmWarningDismiss" aria-label="Dismiss warning">×</button></div></div>
+<script>
+(function careMindHomeAuthPolish(){
+ const gate=document.getElementById('careAuthGate'); if(!gate) return;
+ const area=document.getElementById('careAuthActions');
+ const loginForm=document.getElementById('cmLoginForm'), signupForm=document.getElementById('cmSignupForm');
+ const message=document.getElementById('cmAuthMessage'), title=document.getElementById('cmAuthTitle'), subtitle=document.getElementById('cmAuthSubtitle');
+ const loginTab=document.getElementById('cmLoginTab'), signupTab=document.getElementById('cmSignupTab');
+ const warning=document.getElementById('caremindChatWarning');
+ function token(){return localStorage.getItem('token')||''}
+ function patientSession(){return !!token() && (localStorage.getItem('role')||'').toLowerCase()==='patient'}
+ function setMessage(text,ok=false){message.textContent=text;message.classList.toggle('success',!!ok)}
+ function mode(which){const signup=which==='signup';loginForm.hidden=signup;signupForm.hidden=!signup;loginTab.classList.toggle('active',!signup);signupTab.classList.toggle('active',signup);title.textContent=signup?'Create your patient account':'Welcome back';subtitle.textContent=signup?'Register to unlock your CareMind chat and voice assistant.':'Log in to continue chatting with your CareMind assistant.';setMessage('');gate.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>gate.querySelector('input:not([type=hidden])')?.focus(),30)}
+ function close(){gate.hidden=true;document.body.style.overflow='';}
+ window.openCareMindAuth=mode;
+ window.showCareMindLoginWarning=function(){warning.hidden=false;clearTimeout(window.__cmWarnTimer);window.__cmWarnTimer=setTimeout(()=>warning.hidden=true,10000)};
+ window.requireCareMindLogin=function(){if(patientSession())return true;window.showCareMindLoginWarning();return false};
+ function renderHeader(){if(!area)return;area.replaceChildren();if(patientSession()){const hello=document.createElement('span');hello.textContent='Hi, '+(localStorage.getItem('name')||'Patient');hello.style.cssText='font-weight:700;color:#24445b;padding:8px 3px';const out=document.createElement('button');out.type='button';out.textContent='Logout';out.addEventListener('click',()=>{localStorage.removeItem('token');localStorage.removeItem('role');localStorage.removeItem('name');renderHeader();close();window.showCareMindLoginWarning()});area.append(hello,out)}else{const l=document.createElement('a');l.href='#login';l.textContent='Login';l.addEventListener('click',e=>{e.preventDefault();mode('login')});const s=document.createElement('a');s.href='#signup';s.textContent='Create Account';s.addEventListener('click',e=>{e.preventDefault();mode('signup')});area.append(l,s)}}
+ document.getElementById('cmAuthClose').addEventListener('click',close);gate.addEventListener('click',e=>{if(e.target===gate)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!gate.hidden)close()});loginTab.addEventListener('click',()=>mode('login'));signupTab.addEventListener('click',()=>mode('signup'));
+ document.getElementById('cmWarningLogin').addEventListener('click',()=>{warning.hidden=true;mode('login')});document.getElementById('cmWarningSignup').addEventListener('click',()=>{warning.hidden=true;mode('signup')});document.getElementById('cmWarningDismiss').addEventListener('click',()=>warning.hidden=true);
+ async function postForm(url,form){const fd=new FormData(form);const payload=Object.fromEntries(fd.entries());delete payload.confirm_password;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let data={};try{data=await r.json()}catch(_){}if(!r.ok)throw new Error(data.detail||data.message||'Request failed. Please try again.');return data}
+ loginForm.addEventListener('submit',async e=>{e.preventDefault();const button=loginForm.querySelector('button[type=submit]');button.disabled=true;button.textContent='Signing in…';setMessage('');try{const data=await postForm('/auth/login',loginForm);if((data.role||'').toLowerCase()!=='patient')throw new Error('Please use a patient account to access CareMind chat.');localStorage.setItem('token',data.access_token);localStorage.setItem('role',data.role);localStorage.setItem('name',data.name||'Patient');renderHeader();close();warning.hidden=true;setMessage('')}catch(err){setMessage(err.message)}finally{button.disabled=false;button.textContent='Login to CareMind →'}});
+ signupForm.addEventListener('submit',async e=>{e.preventDefault();const p=signupForm.elements.password.value,cp=signupForm.elements.confirm_password.value;if(p!==cp){setMessage('Passwords do not match.');return}const button=signupForm.querySelector('button[type=submit]');button.disabled=true;button.textContent='Creating account…';setMessage('');try{await postForm('/auth/register',signupForm);mode('login');setMessage('Account created. Please log in to continue.',true);loginForm.elements.email.value=signupForm.elements.email.value;signupForm.reset()}catch(err){setMessage(err.message)}finally{button.disabled=false;button.textContent='Create patient account →'}});
+ if(area){area.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;if(a.getAttribute('href')==='/login'||a.getAttribute('href')==='/register'||a.getAttribute('href')==='#login'||a.getAttribute('href')==='#signup'){e.preventDefault();mode(a.getAttribute('href').includes('register')||a.getAttribute('href').includes('signup')?'signup':'login')}})}
+ renderHeader();warning.hidden=true;gate.hidden=true;document.body.style.overflow='';
+ const homeLogin=document.getElementById('cmHomeLogin');if(homeLogin)homeLogin.addEventListener('click',()=>mode('login'));
+ const homeChat=document.getElementById('cmHomeStartChat');if(homeChat)homeChat.addEventListener('click',()=>{const form=document.getElementById('chatForm');if(form)form.scrollIntoView({behavior:'smooth',block:'center'});if(!patientSession())window.showCareMindLoginWarning()});
+})();
+</script>
+</body>
+</html>

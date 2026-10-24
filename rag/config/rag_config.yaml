@@ -1,0 +1,28 @@
+
+knowledge_base:
+  source_dir: "rag/knowledge_base"
+  chunk_size: 400
+  chunk_overlap: 80
+
+vector_store:
+  vectorizer_path: "rag/artifacts/tfidf_vectorizer.pkl"
+  faiss_index_path: "rag/artifacts/faiss_index.bin"
+  chunks_metadata_path: "rag/artifacts/chunks_metadata.pkl"
+
+retrieval:
+  top_k: 3
+  min_similarity: 0.05
+
+generation:
+  model: "openai/gpt-oss-20b"
+  max_tokens: 300
+  system_prompt: |
+    You are the Sanjeevani Screening Clinic assistant.
+    Answer directly using only relevant clinic knowledge-base context.
+    Understand English and Hinglish; respond in the patient's language when practical.
+    If context lacks the answer, say so and suggest contacting a doctor or clinic reception.
+    Never invent medical information or prescribe medicines, doses, or dosing schedules.
+    Keep answers concise (3-5 sentences).
+    Mention the source or topic when possible.
+    Clarify that the response is general information, not a medical diagnosis.
+      not a medical diagnosis.

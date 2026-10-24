@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create Account | Sanjeevani Clinic</title>
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="login">
+<form id="registerForm">
+  <h1>Create account</h1>
+  <p>Join Sanjeevani Clinic as a patient</p>
+  <input id="fullName" type="text" placeholder="Full name" autocomplete="name" minlength="2" maxlength="120" required>
+  <input id="email" type="email" placeholder="Email address" autocomplete="email" maxlength="160" required>
+  <input id="phone" type="tel" placeholder="Phone (optional)" autocomplete="tel" maxlength="30">
+  <input id="password" type="password" placeholder="Create password (8+ characters)" autocomplete="new-password" minlength="8" maxlength="72" required>
+  <input id="confirmPassword" type="password" placeholder="Confirm password" autocomplete="new-password" required>
+  <button id="submitButton" type="submit">Create account</button>
+  <div id="message" role="status"></div>
+  <p>Already have an account? <a href="/login">Sign in</a></p>
+</form>
+<script>
+const registerForm = document.getElementById("registerForm");
+registerForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = document.getElementById("message");
+  const button = document.getElementById("submitButton");
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  message.textContent = "";
+  message.style.color = "#b42318";
+
+  if (password !== confirmPassword) {
+    message.textContent = "Passwords do not match.";
+    return;
+  }
+
+  button.disabled = true;
+  try {
+    const response = await fetch("/auth/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        full_name: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim() || null,
+        password
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || "Registration failed");
+
+    message.style.color = "#067647";
+    message.textContent = "Account created. Redirecting to login…";
+    setTimeout(() => {
+      location.href = "/login";
+    }, 900);
+  } catch (err) {
+    message.textContent = err.message || "Unable to create account";
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

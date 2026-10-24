@@ -1,0 +1,4 @@
+const token=localStorage.token;if(!token) location.href='/login';
+const api=async(path,opt={})=>{opt.headers={...(opt.headers||{}),Authorization:`Bearer ${token}`};const r=await fetch(path,opt);if(r.status===401){localStorage.clear();location.href='/login'}return r.json()};
+async function load(){const d=await api('/api/dashboard/summary');role.textContent=d.role.replaceAll('_',' ').toUpperCase();title.textContent=`${role.textContent} Dashboard`;cards.innerHTML=Object.entries(d.cards||{}).map(([k,v])=>`<div class="card"><span>${k.replaceAll('_',' ')}</span><strong>${v}</strong></div>`).join('')}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{panelTitle.textContent=b.textContent;content.innerHTML=`<p>${b.textContent} module is permission-controlled for <b>${role.textContent}</b>.</p>`});logout.onclick=()=>{localStorage.clear();location.href='/login'};load();
